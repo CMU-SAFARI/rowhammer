@@ -292,7 +292,7 @@ static void setup_nhm(void)
 
 	/* First, locate the PCI bus where the MCH is located */
 
-	for(i = 0; i < sizeof(possible_nhm_bus); i++) {
+	for(i = 0; i < sizeof(possible_nhm_bus) / sizeof(possible_nhm_bus[0]); i++) {
 		pci_conf_read( possible_nhm_bus[i], 3, 4, 0x00, 2, &vid);
 		pci_conf_read( possible_nhm_bus[i], 3, 4, 0x02, 2, &did);
 		vid &= 0xFFFF;
@@ -327,7 +327,7 @@ static void setup_nhm32(void)
 	ctrl.mode = ECC_NONE;
 
 	/* First, locate the PCI bus where the MCH is located */
-	for(i = 0; i < sizeof(possible_nhm_bus); i++) {
+	for(i = 0; i < sizeof(possible_nhm_bus) / sizeof(possible_nhm_bus[0]); i++) {
 		pci_conf_read( possible_nhm_bus[i], 3, 4, 0x00, 2, &vid);
 		pci_conf_read( possible_nhm_bus[i], 3, 4, 0x02, 2, &did);
 		vid &= 0xFFFF;

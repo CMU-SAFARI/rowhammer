@@ -12,7 +12,7 @@ FDISK=/dev/fd0
 AS=as -32
 CC=gcc
 
-CFLAGS= -Wall -march=i486 -m32 -O1 -fomit-frame-pointer -fno-builtin \
+CFLAGS= -Wall -march=i486 -m32 -O0 -fomit-frame-pointer -fno-builtin \
 	-ffreestanding -fPIC $(SMP_FL) -fno-stack-protector 
 	
 OBJS= head.o reloc.o main.o test.o init.o lib.o patn.o screen_buffer.o \
@@ -21,7 +21,6 @@ OBJS= head.o reloc.o main.o test.o init.o lib.o patn.o screen_buffer.o \
       
 
 all: clean memtest.bin memtest 
-		 scp memtest.bin root@192.168.0.12:/srv/tftp/mt86plus
 
 # Link it statically once so I know I don't have undefined
 # symbols and then link it dynamically so I have full
