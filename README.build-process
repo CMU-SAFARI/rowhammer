@@ -1,0 +1,39 @@
+During memory testing memtest86 relocates itself in memory so it can test the
+memory it was previously running from.  memtest86 is compiled as position mostly
+independent code.  Some relocations records must be processed to achieve the
+affect of position independent code.  A 16 bit loader is prepended to memtest86
+so it can be loaded from a floppy, or from lilo.
+
+In restructuring the build process I had several goals.  Maintainability and
+comprehsibility of the build process.  Simplicity of the toolset. And the
+ability to build images bootable by both the legacy x86 bootloader,
+and images bootable by bootloaders that directly load static ELF images. 
+
+With the ability to proecess relocation records, memtest.bin has been
+reduced in size from 84480 bytes to 49308 bytes.  And now only requires one copy
+of memtest86.  A reduction in size of 35K.  And the build process can now ignore
+the size of memtest86.
+
+BIOS calls have been moved from setup.S to head.S making bootsect.S and
+setup.S exclusively for booting.
+
+memtest86 is built in three stages.  In the first stage the relocatable object
+files are built as with any program.  In the second stage the relocatable object
+files are linked together into memtest_shared, a shared library version
+of memtest86.  In the third stage a raw memory image of memtest_shared is formed
+and linked into memtest.bin, and memtest.
+
+memtest.bin is the floppy/lilo bootable target.
+
+memtest is the ELF bootable target.
+
+Another major change is now data in the bss segment is also preserved
+when memtest86 is relocated, and memtest86 can be relocated to any address. 
+
+The one thing to watch out for is pointers to data inside of memtest86.  Except
+for constant pointers to static data there is not enough information to generate
+relocation records for pointers so they will not change when memtest86 is
+relocated, which might lead to nasty surpises.
+
+Eric Biederman <ebiederman@lnxi.com>
+

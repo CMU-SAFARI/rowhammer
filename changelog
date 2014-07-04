@@ -1,0 +1,25 @@
+Memtest86+ V5.01 changelog
+----------------------------
+
+	- Added support for up to 2 TB of RAM on X64 CPUs
+	- Added experimental SMT support up to 32 cores
+	- Added complete detection for memory controllers.
+	- Added Motherboard Manufacturer & Model reporting
+	- Added CPU temperature reporting
+	- Added enhanced Fail Safe Mode (Press F1 at startup)
+	- Added support for Intel "Sandy Bridge-E" CPUs
+	- Added support for Intel "Ivy Bridge" CPUs
+	- Added preliminary support for Intel "Haswell" CPUs
+	- Added preliminary support for Intel "Haswell-ULT" CPUs
+	- Added support for AMD "Kabini" (K16) CPUs
+	- Added support for AMD "Bulldozer" CPUs
+	- Added support for AMD "Trinity" CPUs
+	- Added support for AMD E-/C-/G-/Z- "Bobcat" CPUs
+	- Added support for Intel Atom "Pineview" CPUs
+	- Added support for Intel Atom "Cedar Trail" CPUs
+	- Added SPD detection on most AMD Chipsets
+	- Enforced Coreboot support
+	- Optimized run time for faster memory error detection
+	- Rewriten lots of memory timings detection code
+	- Corrected bugs, bugs and more bugs
+	

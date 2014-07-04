@@ -1,0 +1,310 @@
+- What is memtest86+, what do I use it for?
+
+  Memtest86+ is a utility designed to test whether your memory is in working
+  order. It repeatedly writes an enormous amount of different patterns to all
+  memory locations and reads them back again and verifies whether the result
+  of the read is the same as what was written to memory.
+
+  There can be a multitude of reasons for running memtest, but foremost of all
+  is of course to test whether your memory modules might be bad. Whenever you
+  suspect your modules to be bad because of system crashes, lockups or reboots
+  it would be nice to know whether the modules are in working order.
+  Memtest86+ is a utility which tries to answer that question for you.
+
+  Another common use exists in the overclocking scene. When overclocking a
+  system you are essentially pushing your system to the limits and at some
+  point it will simply give way and break. Unfortunately there isn't a clear
+  cut way of deciding whether a system is still working correctly. Because of
+  the complexity of a computer a system which is pushed to the limits doesn't
+  just break completely when it starts to fail, instead little errors start
+  showing up in many different places in the system growing more frequent and
+  widespread the more the system is pushed. Each one of these little errors
+  can lead to a crash of your system but can also go unnoticed for days or
+  weeks in a running system. The art so to speak of overclocking is thus to
+  push the system as far as it can go without introducing any such errors. As
+  memory is usually one of the first places these such errors start coming up
+  a memory test is very useful.
+
+- How do I get it to run?
+
+  There are several ways to use memtest, which are described below:
+
+  + Run from floppydisk
+
+    Memtest86+ is directly executable by any modern x86 compatible machine, by
+    writing the bootable binary to a floppy disk one can boot from the disk to
+    run memtest.
+
+    Simply download the appropriate package, the Pre-Compiled Bootable Binary
+    (.gz) package for Linux users and the Pre-Compiled package for Floppy (DOS
+    - Win) for Windows users.
+
+    For Windows, unzip the package into a directory like C:\memtest, insert a
+    blank floppy into your a: disk drive and run the install.bat file. As the
+    install prompts you, to use memtest directly, leave the disk in the drive
+    and reboot your machine.
+
+    For Linux, unpack the package into your home directory, insert a blank
+    floppy into your floppy drive and execute 'dd if=~/memtest+-1.xx.bin.gz
+    of=/dev/fd0 conv=osync' replacing 1.xx with the correct version number of
+    the memtest86+ you downloaded. To run memtest immediately reboot your
+    machine.
+
+    Your machine should now boot from the disk, display the word Loading
+    folowed by a series of periods and then show a screen much like the
+    screenshots on the memtest86+ web page. The test is automatically started.
+
+    If your machine simply boots back into Windows/Linux you will most likely
+    have to configure your BIOS to attempt to boot from floppy disk on
+    startup, refer to your computer's/mainboard's manual how to do this.
+
+    When you are done testing simply remove the floppy and reset your
+    computer, if ever you want to execure the test again simply reinsert the
+    disk and reboot/start your computer.
+
+  + Run from CD
+
+    Memtest86+ is directly executable by any modern x86 compatible machine, by
+    writing the iso to a CD one can boot from the CD to run memtest.
+
+    Simply download the appropriate package, the Download - Pre-Compiled
+    Bootable ISO (.gz) for Linux users and the Pre-Compiled Bootable ISO
+    (.zip) for Windows users.
+
+    For Windows, unzip the package into a directory like C:\memtest. You will
+    now see a file called memtest86+-1.xx.iso in this directory. You will need
+    to burn this file to a CD with a CD recording program. Do note however
+    that you should not make a regular data CD on which you for instance write
+    your text documents and holiday photographs. Instead the iso file is a so
+    called image of a CD, it is a direct copy of a CD. Your CD recording
+    program will most likely have a feature called burn image or something to
+    that effect which you should use to burn the CD.
+
+    For linux, unzip the package into your home directory. and execute
+    'cdrecord dev=<your burner> ~/memtest86+-1.xx.iso' where you replace <your
+    burner> with the scsi address of your CD burner and replace 1.xx with the
+    correct version number of the memtest86+ your downloaded.
+
+    When the burning completed your drive will most likely have ejected the CD
+    and you should have a bootable memtest86+ CD. To run the test directly
+    reinsert the CD and reboot your machine.
+
+    Your machine should now boot from the CD, display the word Loading folowed
+    by a series of periods and then show a screen much like the screenshots on
+    the memtest86+ web page. The test is automatically started.
+
+    If your machine simply boots back into Windows/Linux you will most likely
+    have to configure your BIOS to attempt to boot from CD-ROM drive on
+    startup, refer to your computer's/mainboard's manual how to do this.
+
+    When you are done testing simply remove the CD and reset your computer, if
+    ever you want to execure the test again simply reinsert the CD and
+    reboot/start your computer.
+
+  + Run from USB Flash drive
+
+    FIXME
+
+  + Run from boot manager
+
+    FIXME
+
+- How long does memtest86+ run? How do I stop it?
+
+  Memtest86+ runs indefinately unless you stop it. It does however repeat the
+  same tests over and over again. Memtest86+ contains a number of different
+  tests which each take different approaches in trying to expose any errors in
+  your memory. In the top right of your screen you can see the progress of
+  each test in the lower of the two progress bars. The topmost progress bar
+  shows the progress of a pass, each pass consists of all the tests in the
+  memtest suite.
+
+  Thus all tests are executed in one pass, so does that mean that no errors
+  will show after the first pass if that pass didn't reveal any errors? Well
+  no, there are several reasons why errors might only show up after a number
+  of passes. Firstly as of this writing, the latest version of memtest also
+  includes a test which uses random test patterns, each pass these patterns
+  will of course be different. Secondly some types of errors simply don't show
+  up until the system has been running for a while or are very critical on a
+  certain timing condition, or other such conditions.
+
+  To conclude, one successful pass of memtest will give you a pretty good idea
+  that your memory is ok, only in rare cases will there be errors showing
+  after the first pass. To be sure though simply have the test run overnight
+  or even for a couple of days depending on the level of importance of the
+  system.
+  
+- How many errors are acceptable?
+
+  No errors are acceptable. Even if there is just one error, something is
+  amiss which can cause your system to crash. Of course what the cause of the
+  errors is you will still have to determine.
+
+- What do I do when I get errors?
+
+  Firstly, don't start drawing any conclusions. You only know that memtest86+
+  is giving your errors, not what the cause is. Unfortunately it is not a
+  straightforward exercise to decisively test the memory in an actual system.
+  This is because a computer is not just built up of some memory, but also
+  includes many other elements such as a memory controller, cache, a cache
+  controller, algorithmic and logic units, etc, all of which contribute to the
+  machine. If there are faults in any of these other parts of the computer you
+  will likely also see errors showing up in memtest.
+
+  So what to do? First verify that the BIOS settings of your machine are
+  correctly configured. Look up the memory timing settings applicable to the
+  brand and type of memory modules you have and check they match your BIOS
+  settings, correct them if they don't and run memtest again
+  
+  Ok, you have all the settings correctly set and you're still getting errors.
+  Well of course a very likely cause are the memory modules and the logical
+  course of action is to look into them further.
+
+  If you are well stocked, have a few other machines at your disposal, or just
+  want to spend the cash for some new modules the best way to test if the
+  cause are your memory modules is just to replace them and test again. If you
+  are less fortunate though there is still something you can do.
+
+  If you have more then one module in your system, test them one by one, if
+  one is consistently giving errors and another is consistently showing no
+  errors it's a pretty good bet that the module giving the errors is simply
+  defective. To exclude the possibility that a defective slot is throwing your
+  results, use the same slot to test each different module.
+  
+  If each module by itself shows no errors, but when you place two or more
+  modules into the machine at the same time you do get errors, you are most
+  likely stuck with a compatibility issue and unfortunately there isn't a
+  whole lot you can do about it. Be sure to check your computer/motherboard
+  manual to see if the setup you are trying is allowed, some boards require
+  special restrictions in the sizes of modules, the order of modules, the
+  placement of double sided and single sides modules and more of such things.
+
+  If you have only one module in your system, or all modules are giving
+  errors, there are only very few options left. The only thing you can do
+  really is to try the module(s) in another slot. Finally simply try out
+  different orders of the memory modules, although your manual might not
+  mention anything on the matter sometimes there simply exist timing or other
+  issues which can be resolved by changing the order of your modules.  And of
+  course test each slot by putting a single module into that slot and running
+  memtest on it.
+
+  In the end if you still have not been able to localize the problem you will
+  have to find a replacement module to establish whether the problem lies in
+  your modules. See if you can borrow a module from someone else.
+
+  When you have replaced the memory by new memory and the errors still
+  persist, first check if you can rule out any compatibility issues or timing
+  issues. If you are sure the memory should work in the system the cause of
+  the errors must obviously lie someplace else in the system.
+  
+  The only way to find out where, is by trial and error really. Simply start
+  replacing and/or removing parts of your computer one by one, running memtest
+  each time you changed anything, until the errors are resolved.
+
+- I'm getting errors in test #x, what doest that mean?
+
+  Interpreting memtest results is as scientific an endeavour as testing
+  whether a person is a witch by the methods used in Monty Python's Holy
+  Grail. In short, don't even start, it's not going to get you anywhere. Just
+  interpret any error as you should any other and use the methods descibed in
+  the previous question to determine the cause.
+
+- I'm getting errors in test #5 and/or #8 and have read a lot about it.
+
+  Yes there are just about enough discussions on the topic to fill a book, but
+  it all boils down to the answer given above. The only thing that can be said
+  is that many a times, when memory latencies are incorrectly set in the BIOS
+  you will experience errors in test #5 and #8. (Though #8 does not exist
+  anymore as of version 1.40 and might be reinstated as a different test in a
+  later version.) This does however NOT mean that errors in these tests are
+  always the cause of incorrect settings, your memory might just as well be
+  defective.
+
+- I'm getting errors in memtest on one machine, but not when I put the same
+  memory in another, what does that mean?
+
+  It can mean one of two things:
+    - The machine that is giving the errors is defective. Errors don't just
+      orginate from the memory module itself, but can also be caused by
+      defects in the cpu, chipset, motherboard, PSU and even by timing issues
+      introduced by any other component in the machine.
+    - The machine giving the errors is imposing stricter timing than the other
+      which the memory module simply can't cope with. If the module should
+      work with the machine according to its specifications then it most
+      likely is defective.
+
+- Which memory is tested?
+
+  As much as possible of the system memory is tested. Unfortunately memtest86+
+  can usually not test all of the memory. The reason for this is that todays
+  processors have become so complex that they require a small amount of memory
+  to keep accounting data of the processor state. If memtest were to write
+  over these areas the state of the processor becomes invalid and it's
+  behaviour unpredictable. Alas it is also impossible to relocate these areas
+  in the memory.
+
+  This means that a small area of your memory can not be tested by memtest. If
+  this part of the memory is defective you will know soon enough though as the
+  processor, or parts of the processor simply won't work correctly if this
+  part of your memory is defective. Do realise though that in very rare cases
+  memtest will show no errors even though the module is defective, not because
+  memtest can't detect the error, but because memtest can't test the area the
+  error is located in.
+
+- When I select BIOS-ALL I get many errors / my machine crashes.
+
+  This is normal. With todays computers this option should never be selected.
+  See the previous question about the reason for the errors.
+
+- I want to use memtest on a multiboot CD, how do I do this?
+
+  This is of course very dependent on which boot loader you use for your CD.
+  Below is a description of how to set up a multiboot CD including memtest+
+  with isolinux, if you have experience with any other bootloader(s) please
+  consider writing a small description of using memtest with that bootloader
+  for the FAQ.
+
+  -isolinux
+    
+    For general instructions on how to make a bootable CD with isolinux see
+    the syslinux website and the manual. What you need to do to get memtest
+    working is as follows.
+
+    Download the Pre-Compiled Bootable Binary, the .gz if you are working
+    under linux, the .zip if you are working under windows. Unpack the file
+    from the package and rename it to an 8.3 filename with an extension other
+    than .bin, renaming to memtest. (without an extension) is a good choice.
+
+    Put the file somewhere in your CD directory structure, for example in
+    images/memtest and edit your config file to include the following:
+
+    label memtest
+        kernel /images/memtest
+
+    If you want to boot memtest automatically insert or change a line at the
+    top to:
+
+    default memtest
+
+    If you want to display a prompt from which you can start memtest add or
+    change the lines at the top to: (Change the timeout to suit your needs)
+
+    prompt 1
+    timeout 200
+
+- If memtest86+ shows no errors does that mean my memory is not defective?
+
+  Of course no answers are definitive, no matter how good memtest86+ will
+  eventually become there is always the possibility that a particular type of
+  error will go unnoticed. As long as you are having no problems with the
+  system it will be pretty safe to say that the modules are good. If you are
+  having problems with the system however you will just have to check by trial
+  and error, ie swapping the modules for new ones and/or testing with modules
+  of a different brand/type.
+
+- When I run install.bat it doesn't write anything to floppy.
+
+  You most likely have unpacked the memtest+-2.xx.floppy.zip file into a
+  folder with a long pathname and/or containing + and - signs. It seems
+  rawrite doesn't like that. Just move the files you unpacked to a directory
+  like c:\memtest and execure it from there.

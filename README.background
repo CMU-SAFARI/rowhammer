@@ -1,0 +1,156 @@
+                       The Anatomy & Physiology of Memtest86-SMP
+                       -----------------------------------------
+
+1. Binary layout
+                                            
+       ---------------------------------------------------------------
+       | bootsect.o      | setup.o          | head.o memtest_shared  |
+       ---------------------------------------------------------------
+Labels                                _start<-------memtest---------->_end
+       -----------------------------------------------------------
+addr   0               512        512+4*512 |
+       -----------------------------------------------------------
+
+2. The following steps occur after we power on.
+   a. The bootsect.o code gets loaded at 0x7c00 
+      and copies 
+      i.   itself to 0x90000
+      ii.  setup.o to 0x90200
+      iii. everything between _start and _end i.e memtest 
+           to 0x10000
+   b. jumps somewhere into the copied bootsect.o code at 0x90000
+      ,does some trivial stuff and jumps to setup.o
+   c. setup.o puts the processor in protected mode, with a basic
+      gdt and idt and does a long jump to the start of the 
+      memtest code (startup_32, see 4 below). The code and data 
+      segment base address are all set to 0x0. So a linear 
+      address range and no paging is enabled.
+   d. From now on we no longer required the bootsect.o and setup.o 
+      code.
+3. The code in memtest is compiled as position independent
+   code. Which implies that the code can be moved dynamically in 
+   the address space and can still work. Since we are now in head.o,
+   which is compiled with PIC , we no longer should use absolute 
+   addresses references while accessing functions or globals.  
+   All symbols are stored in a table called Global Offset Table(GOT)
+   and %ebx is set to point to the base of that table. So to get/set 
+   the value of a symbol we need to read (%ebx + symbolOffsetIntoGOT) to 
+   get the symbol value. For eg. if foo is global varible the assembly
+   code to store %eax value into foo will be changed from
+                    mov %eax, foo
+                        to 
+                    mov %eax, foo@GOTOFF(%ebx)
+4. (startup_32) The first step done in head.o is to change   
+   the gdtr and idtr register values to point to the final(!) 
+   gdt and ldt tables in head.o, since we can no longer use the 
+   gdt and ldt tables in setup.o, and call the dynamic linker 
+   stub in memtest_shared (see call _dl_start in head.S). This 
+   dynamic linker stub relocates all the code in memtest w.r.t 
+   the new base location i.e 0x1000. Finally we call the test_start() 
+   'C' routine.
+5. The test_start() C routine is the main routine which lets the BSP 
+   bring up the APs from their halt state, relocate the code 
+   (if necessary) to new address, move the APs to the newly 
+   relocated address and execute the tests. The BSP is the
+   master which controls the execution of the APs, and mostly
+   it is the one which manupulates the global variables. 
+   i.  we change the stack to a private per cpu stack.
+       (this step happens every time we move to a new location)
+   ii. We kick start the APs in the system by
+      a. Putting a temporary real mode code 
+         (_ap_trampoline_start - _ap_trampoline_protmode) 
+         at 0x9000, which puts the AP in protected mode and jumps 
+         to _ap_trampoline_protmode in head.o. The code in 
+         _ap_trampoline_protmode calls start_32 in head.o which 
+         reinitialises the AP's gdt and idt to point to the
+         final(!) gdt and idt. (see step 4 above)
+      b. Since the APs also traverse through the same initialisation
+         code(startup_32 in head.o), the APs also call test_start().
+         The APs just spin wait (see AP_SpinWaitStart) till the 
+         are instructed by the BSP to jump to a new location, 
+         which can either be a test execution or spin wait at a 
+         new location.
+  iii. The base address at which memtest tries to execute as far
+       as possible is 0x2000. This is the lowest possible address
+       memtest can put itself at. So the next step is to 
+       move to 0x2000, which it cannot directly, since copying
+       code to 0x2000 will override the existing code at 0x1000.
+       0x2000 +sizeof(memtest) will usually be greater than 0x1000.
+       so we temporarily relocated to 0x200000 and then relocate
+       back to 0x2000. Every time the BSP relocates the code to the
+       new location, it pulls up the APs spin waiting at the old 
+       location to spin wait at the corresponding relocated 
+       spin wait location, by making them jump to the new
+       statup_32 relocated location(see 4 above).
+       Hence forth during the tests 0x200000 is the only place 
+       we relocate to if we need to test a memory window 
+       (see v. below to get a description of what a window is)
+       which includes address range 0x2000.
+
+   Address map during normal execution.
+       --------------------------------------------------------------------
+             | head.o memtest_shared  |                                   |RAM_END
+       --------------------------------------------------------------------
+Labels _start<-------memtest---------->_end
+       --------------------------------------------------------------------
+addr   0x0   0x2000                   | Memory that is being tested..     |RAM_END
+       --------------------------------------------------------------------
+
+   Address map during relocated state.
+       --------------------------------------------------------------------
+                                      | head.o memtest_shared  |          |RAM_END
+       --------------------------------------------------------------------
+Labels                          _start<-------memtest---------->_end
+       --------------------------------------------------------------------
+addr   memory that is being tested... |0x200000                 |         |RAM_END
+       --------------------------------------------------------------------
+
+   iv. Once we are at 0x2000 we initialise the system, and 
+       determine the memory map ,usually via the bios e820 map. 
+       The sorted, and non-overlapping RAM page ranges are 
+       placed in v->pmap[] array. This array is the reference 
+       of the RAM memory map on the system. 
+    v. The memory range(in page numbers) which the 
+       memtest86 can test is partitioned into windows.
+       the current version of memtest86-smp has the capability
+       to test the memory from 0x0 - 0xFFFFFFFFF (max address
+       when pae mode is enabled). 
+       We then compute the linear memory address ranges(called
+       segments) for the window we are currently about to 
+       test. The windows are
+          a. 0  - 640K 
+          b. (0x2000 + (_end - _start))  - 4G (since the code is at 0x2000).
+          c. >4G to test pae address range, each window with size 
+             of 0x80000(2G), large enough to be mapped in one page directory
+             entry. So a window size of 0x80000 means we can map 1024 page 
+             table entries, with page size of 2M(pae mode), with one
+             page directory entry. Something similar to kseg entry
+             in linux. The upper bound page number is 0x1000000 which
+             corresponds to linear address 0xFFFFFFFFF + 1 which uses
+             all the 36 address bits. 
+       Each window is compared against the sorted & non-overlapping 
+       e820 map which we have stored in v->pmap[] array, since all 
+       memory in the selected window address range may correspond to
+       RAM or can be usable. A list of segments within the window is
+       created , which contain the usable portions of the window. 
+       This is stored in v->mmap[] array.
+   vi. Once the v->mmap[] array populated, we have the list of 
+       non-overlapping segments in the current window which are the
+       final address ranges that can be tested. The BSP executes the
+       test first and lets each AP execute the test one by one. Once
+       all the APs finish execting the same test, the BSP moves to the
+       next window follows the same procedure till all the windows 
+       are done. Once all the windows are done, the BSP moves to the
+       next test. Before executing in any window the BSP checks if
+       the window overlaps with the code/data of memtest86, if so
+       tries to relocate to 0x200000. If the window includes both 
+       0x2000 as well as 0x200000  the BSP skips that window.
+       Looking at the window values the only time the memtest
+       relocates is when testing the 0 - 640K window.
+
+Known Issues:
+* Memtest86-smp does not work on IBM-NUMA machines, x440 and friends.
+
+email comments to:
+Kalyan Rajasekharuni<kc_rajasekharuni@yahoo.com>
+Sub: Memtest86-SMP
