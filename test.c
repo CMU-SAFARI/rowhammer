@@ -1543,6 +1543,44 @@ void sleep(long n, int flag, int me, int sms)
 	}
 }
 
+
+/* RowHammer */
+void rowhammer(int row_max, int *row_cnt, int toggle_max, int me)
+{
+    ulong ROW_SIZE = 1 << 13;    // 8KB
+    ulong ADDR_OFFSET = 1 << 23; // 8MB
+
+    for (int s = 0; s < segs; s++) {
+        char *start = (char *) v->map[s].start;
+        char *end = (char *) v->map[s].end;
+
+        // test every row-pair
+	for (char *addr1 = start; ; addr1 += ROW_SIZE) {
+            char *addr2 = addr1 + ADDR_OFFSET;
+            if (addr2 >= end)
+                break;
+
+            if (*row_cnt >= row_max)
+                break;
+
+            // open and close row-pair (addr1 & addr2) repeatedly
+            for (int toggle = 0; toggle < toggle_max; toggle++) {
+                asm volatile("movl (%0), %%eax" : : "r" (addr1) : "eax");
+                asm volatile("movl (%0), %%ebx" : : "r" (addr2) : "ebx");
+                asm volatile("clflush (%0)" : : "r" (addr1) : "memory");
+                asm volatile("clflush (%0)" : : "r" (addr2) : "memory");
+                asm volatile("mfence");
+            }
+
+            (*row_cnt)++;
+
+            do_tick(me);  // advance progress-bar
+            BAILR
+        }
+    }
+}
+
+
 /* Beep function */
 
 void beep(unsigned int frequency)

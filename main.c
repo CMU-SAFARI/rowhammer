@@ -48,19 +48,24 @@ static void	test_setup(void);
 static int	compute_segments(struct pmap map, int cpu);
 int		do_test(int ord);
 struct tseq tseq[] = {
-	{1, -1,  0,   6, 0, "[Address test, walking ones, no cache] "},
-	{1, -1,  1,   6, 0, "[Address test, own address Sequential] "},
-	{1, 32,  2,   6, 0, "[Address test, own address Parallel]   "},
-	{1, 32,  3,   6, 0, "[Moving inversions, 1s & 0s Parallel]  "},
-	{1, 32,  5,   3, 0, "[Moving inversions, 8 bit pattern]     "},
-	{1, 32,  6,  30, 0, "[Moving inversions, random pattern]    "},
-	{1, 32,  7,  81, 0, "[Block move]                           "}, 
-	{1,  1,  8,   3, 0, "[Moving inversions, 32 bit pattern]    "}, 
-	{1, 32,  9,  48, 0, "[Random number sequence]               "},
-  {1, 32, 10,   6, 0, "[Modulo 20, Random pattern]            "},
-	{1, 1,  11, 240, 0, "[Bit fade test, 2 patterns]            "},
-	{1, 0,   0,   0, 0, NULL}
+	{0, -1,  0,   6, 0, "[Address test, walking ones, no cache] "},
+	{0, -1,  1,   6, 0, "[Address test, own address Sequential] "},
+	{0, 32,  2,   6, 0, "[Address test, own address Parallel]   "},
+	{0, 32,  3,   6, 0, "[Moving inversions, 1s & 0s Parallel]  "},
+	{0, 32,  5,   3, 0, "[Moving inversions, 8 bit pattern]     "},
+	{0, 32,  6,  30, 0, "[Moving inversions, random pattern]    "},
+	{0, 32,  7,  81, 0, "[Block move]                           "},
+	{0,  1,  8,   3, 0, "[Moving inversions, 32 bit pattern]    "},
+	{0, 32,  9,  48, 0, "[Random number sequence]               "},
+	{0, 32, 10,   6, 0, "[Modulo 20, Random pattern]            "},
+	{0,  1, 11, 240, 0, "[Bit fade test, 2 patterns]            "},
+	{1,  1, 12,   1, 0, "[RowHammer]                            "},
+	{1,  0,  0,   0, 0, NULL}
 };
+
+static const int row_max = 100;        // RowHammer: number of row-pairs to test
+static int row_cnt = 0;                // RowHammer: number of row-pairs tested so far
+static const int toggle_max = 2600000; // RowHammer: number of times to toggle each row-pair
 
 volatile int    mstr_cpu;
 volatile int	run_cpus;
@@ -77,6 +82,7 @@ short	        restart_flag;
 bool	        reloc_pending = FALSE;
 uint8_t volatile stacks[MAX_CPUS][STACKSIZE];
 int 		bitf_seq = 0;
+int 		rowhammer_seq = 0;
 char		cmdline_parsed = 0;
 struct 		vars variables = {};
 struct 		vars * const v = &variables;
@@ -564,6 +570,12 @@ void test_start(void)
 			window = 1;
 		}
 
+		/* For the RowHammer test, #12, we cannot relocate so bump the
+		 * window to 1 */
+		if (tseq[test].pat == 12 && window == 0) {
+			window = 1;
+		}
+
 		/* Relocate if required */
 		if (window != 0 && (ulong)&_start != LOW_TEST_ADR) {
 			btrace(my_cpu_num, __LINE__, "Sched_RelL", 1,0,0);
@@ -717,6 +729,15 @@ void test_start(void)
 		bitf_seq = 0;
 	    }
 
+	    /* Special handling for the RowHammer test #12 */
+	    if (tseq[test].pat == 12 && rowhammer_seq != 6) {
+		/* Keep going until the sequence is complete. */
+		rowhammer_seq++;
+		continue;
+	    } else {
+		rowhammer_seq = 0;
+	    }
+
 	    /* Select advancement of CPUs and next test */
 	    switch(cpu_mode) {
 	    case CPM_RROBIN:
@@ -773,6 +794,10 @@ void test_start(void)
 							beep(2000);
 						}
 				}
+
+                        // after finishing one pass, get stuck in infinite loop to prevent further passes.
+                        // every iteration of the loop checks for user-input keys ('ESC': reboots system)
+                        for (;;) {check_input();}
 	    }
 
 	    bail=0;
@@ -1003,6 +1028,33 @@ int do_test(int my_ord)
 		BAILOUT;
 		break;
 
+        case 12: /* RowHammer */
+            switch (rowhammer_seq) {
+                case 0:
+                    row_cnt = 0;
+                    bit_fade_fill(0, my_ord);
+                    break;
+                case 1:
+                    rowhammer(row_max, &row_cnt, toggle_max, my_ord);
+                    break;
+                case 2:
+                    bit_fade_chk(0, my_ord);
+                    break;
+                case 3:
+                    row_cnt = 0;
+                    bit_fade_fill(-1, my_ord);
+                    break;
+                case 4:
+                    rowhammer(row_max, &row_cnt, toggle_max, my_ord);
+                    break;
+                case 5:
+                    bit_fade_chk(-1, my_ord);
+                    break;
+
+                }
+		BAILOUT;
+		break;
+
 	case 90: /* Modulo 20 check, all ones and zeros (unused) */
 		p1=0;
 		for (i=0; i<MOD_SZ; i++) {
@@ -1050,7 +1102,11 @@ int find_chunks(int tst)
 	wmax = MAX_MEM/WIN_SZ+2;  /* The number of 2 GB segments +2 */
 	/* Compute the number of SPINSZ memory segments */
 	ch = 0;
-	for(j = 0; j < wmax; j++) {
+
+        if (tst == 11 || test == 12) j = 1;  // don't count chunks in 0th window
+        else j = 0;
+
+	for(; j < wmax; j++) {
 		/* special case for relocation */
 		if (j == 0) {
 			twin.start = 0;
@@ -1170,6 +1226,9 @@ static int find_ticks_for_test(int tst)
 	case 11: /* Bit fade test */
 		ticks = c * 2 + 4 * ch;
 		break;
+	case 12: /* RowHammer */
+		ticks = (4 * ch) + (2 * row_max);
+		break;
 	case 90: /* Modulo 20 check, all ones and zeros (unused) */
 		ticks = (2 + c) * 40;
 		break;
@@ -1180,7 +1239,7 @@ static int find_ticks_for_test(int tst)
 	if (cpu_mode == CPM_SEQ || tseq[tst].cpu_sel == -1) {
 		ticks *= act_cpus;
 	}
-	if (tseq[tst].pat == 7 || tseq[tst].pat == 11) {
+	if (tseq[tst].pat == 7 || tseq[tst].pat == 11 || tseq[tst].pat == 12) {
 		return ticks;
 	}
 	return ticks*ch;
