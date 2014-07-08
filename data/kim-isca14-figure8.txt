@@ -1,0 +1,28 @@
+# Yoongu Kim. 2014.
+#
+# "Flipping Bits in Memory Without Accessing Them:
+# An Experimental Study of DRAM Disturbance Errors"
+#
+# International Symposium on Computer Architecture
+
+
+# Column 1: Module Identifier
+# Column 2: Victim Rows per Aggressor Row
+# Column 3: Count
+
+
+A23  1  91
+A23  2  31847
+A23  3  800
+A23  4  10
+A23  5  1
+A23  6  3
+A23  7  4
+A23  8  7
+A23  9  5
+B11  1  931
+B11  2  31819
+B11  3  4
+C19  1  12930
+C19  2  2483
+C19  3  1
