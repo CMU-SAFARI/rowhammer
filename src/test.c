@@ -1410,6 +1410,7 @@ void block_move(int iter, int me)
 /*
  * Test memory for bit fade, fill memory with pattern.
  */
+static const int row_addr_lsb = 17;
 void bit_fade_fill(ulong p1, int me)
 {
 	int j, done;
@@ -1444,8 +1445,11 @@ void bit_fade_fill(ulong p1, int me)
 				break;
 			}
  			for (; p < pe;) {
-				*p = p1;
-				p++;
+                            uintptr_t addr = (uintptr_t) p;
+                            int bit = (addr >> row_addr_lsb) & 1;
+                            if (!bit) *p = p1;
+                            else *p = ~p1;
+                            p++;
 			}
 			p = pe + 1;
 		} while (!done);
@@ -1483,10 +1487,17 @@ void bit_fade_chk(ulong p1, int me)
 				break;
 			}
  			for (; p < pe;) {
- 				if ((bad=*p) != p1) {
-					error((ulong*)p, p1, bad);
-				}
-				p++;
+                            uintptr_t addr = (uintptr_t) p;
+                            int bit = (addr >> row_addr_lsb) & 1;
+                            if (!bit && (*p != p1)) {
+                                bad = *p;
+                                error((ulong*)p, p1, bad);
+                            }
+                            else if (bit && (*p != ~p1)) {
+                                bad = *p;
+                                error((ulong*)p, ~p1, bad);
+                            }
+                            p++;
 			}
 			p = pe + 1;
 		} while (!done);
@@ -1547,17 +1558,22 @@ void sleep(long n, int flag, int me, int sms)
 /* RowHammer */
 void rowhammer(int row_max, int *row_cnt, int toggle_max, int me)
 {
-    ulong ROW_SIZE = 1 << 13;    // 8KB
-    ulong ADDR_OFFSET = 1 << 23; // 8MB
+    ulong ROW_SIZE = 1 << 13;  // 8KB
+    ulong BANK_ALIGN = 1 << 23;  // 8MB
 
     for (int s = 0; s < segs; s++) {
-        char *start = (char *) v->map[s].start;
-        char *end = (char *) v->map[s].end;
+        uintptr_t start = (uintptr_t) v->map[s].start;
+        uintptr_t end = (uintptr_t) v->map[s].end;
+
+        uintptr_t size = end - size;
+        uintptr_t offset = (size / 2) & ~(BANK_ALIGN - 1);
+        if (offset < BANK_ALIGN)
+            continue;
 
         // test every row-pair
-	for (char *addr1 = start; ; addr1 += ROW_SIZE) {
-            char *addr2 = addr1 + ADDR_OFFSET;
-            if (addr2 >= end)
+	for (char *addr1 = (char *) start; ; addr1 += ROW_SIZE) {
+            char *addr2 = addr1 + offset;
+            if ((uintptr_t) addr2 >= end)
                 break;
 
             if (*row_cnt >= row_max)
@@ -1569,7 +1585,7 @@ void rowhammer(int row_max, int *row_cnt, int toggle_max, int me)
                 asm volatile("movl (%0), %%ebx" : : "r" (addr2) : "ebx");
                 asm volatile("clflush (%0)" : : "r" (addr1) : "memory");
                 asm volatile("clflush (%0)" : : "r" (addr2) : "memory");
-                asm volatile("mfence");
+                //asm volatile("mfence");
             }
 
             (*row_cnt)++;

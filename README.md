@@ -46,7 +46,7 @@ At a high level, the test consists of six steps. (For more details, please refer
 
 The RowHammer test is *not* comprehensive. Passing the test does *not* guarantee that your DRAM is free from errors. This is because of three reasons.
 
-- *Reason 1: Only a few rows are tested.* Due to the sheer number of reads to each row, exhaustively testing every row could take up to several days. Instead, we test only a few rows so that the test "completes" within a reasonable amount of time. (Nevertheless, on an Intel Haswell, the test induced 17 errors in 1.5 minutes for an exceptionally problematic DRAM module.) However, it is trivial to increase the number of tested rows by editing the source code.
+- *Reason 1: Only a few rows are tested.* Due to the sheer number of reads to each row, exhaustively testing every row could take up to several days. Instead, we test only a few rows so that the test "completes" within a reasonable amount of time. (Nevertheless, on an Intel Haswell, the test induced ~1,000 errors in ~10 minutes for an exceptionally problematic DRAM module.) However, it is trivial to increase the number of tested rows by editing the source code.
 
 - *Reason 2: There may be better access-patterns.* The more quickly a row is activated, the more errors it induces in its adjacent rows. However, our particular way of accessing DRAM (interleaved reads to two rows, cache-line flush, and memory fence) imposes a large delay between activations to the same row. Quicker ways of activating a row may exist.
 
@@ -56,7 +56,7 @@ The RowHammer test is *not* comprehensive. Passing the test does *not* guarantee
  
     - *Address-swizzling by memory controller.* To extract memory parallelism, the memory controller "swizzles" the physical address (by utilizing a combination of bit-wise permutations and XORs) before it accesses DRAM. This makes it difficult to determine which physical addresses correspond to which DRAM rows.
 
-By overcoming all of the above, it is possible to increase the number of errors by many orders of magnitude. As an example, we were able to increase the number of errors from 17 to 10,000,000 for one exceptionally problematic DRAM module. The latter number was obtained using custom-built hardware equipment that allows us to test every row in the DRAM module (within a relatively short amount of time)  using the best access-pattern and the best data-pattern. (For more details, please refer to Section 5 of our paper [1].)
+By overcoming all of the above, it is possible to increase the number of errors by many orders of magnitude. As an example, we were able to increase the number of errors from 1,000 to 10,000,000 for the exceptionally problematic DRAM module. The latter number was obtained using custom-built hardware equipment that allows us to test every row in the DRAM module (within a relatively short amount of time)  using the best access-pattern and the best data-pattern. (For more details, please refer to Section 5 of our paper [1].)
 
 ### Contributors
 

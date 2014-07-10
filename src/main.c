@@ -63,9 +63,10 @@ struct tseq tseq[] = {
 	{1,  0,  0,   0, 0, NULL}
 };
 
-static const int row_max = 100;        // RowHammer: number of row-pairs to test
+static const int row_max = 1000;       // RowHammer: number of row-pairs to test
 static int row_cnt = 0;                // RowHammer: number of row-pairs tested so far
 static const int toggle_max = 2600000; // RowHammer: number of times to toggle each row-pair
+static const ulong data_pattern =  0x00000000UL;
 
 volatile int    mstr_cpu;
 volatile int	run_cpus;
@@ -1032,23 +1033,23 @@ int do_test(int my_ord)
             switch (rowhammer_seq) {
                 case 0:
                     row_cnt = 0;
-                    bit_fade_fill(0, my_ord);
+                    bit_fade_fill(data_pattern, my_ord);
                     break;
                 case 1:
                     rowhammer(row_max, &row_cnt, toggle_max, my_ord);
                     break;
                 case 2:
-                    bit_fade_chk(0, my_ord);
+                    bit_fade_chk(data_pattern, my_ord);
                     break;
                 case 3:
                     row_cnt = 0;
-                    bit_fade_fill(-1, my_ord);
+                    bit_fade_fill(~data_pattern, my_ord);
                     break;
                 case 4:
                     rowhammer(row_max, &row_cnt, toggle_max, my_ord);
                     break;
                 case 5:
-                    bit_fade_chk(-1, my_ord);
+                    bit_fade_chk(~data_pattern, my_ord);
                     break;
 
                 }
