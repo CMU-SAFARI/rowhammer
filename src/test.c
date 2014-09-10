@@ -1565,7 +1565,7 @@ void rowhammer(int row_max, int *row_cnt, int toggle_max, int me)
         uintptr_t start = (uintptr_t) v->map[s].start;
         uintptr_t end = (uintptr_t) v->map[s].end;
 
-        uintptr_t size = end - size;
+        uintptr_t size = end - start;
         uintptr_t offset = (size / 2) & ~(BANK_ALIGN - 1);
         if (offset < BANK_ALIGN)
             continue;
