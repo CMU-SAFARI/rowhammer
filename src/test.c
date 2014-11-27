@@ -25,6 +25,7 @@ extern int test_ticks, nticks;
 extern struct tseq tseq[];
 extern void update_err_counts(void);
 extern void print_err_counts(void);
+extern void do_rowhammer(char *addr1, char *addr2, int count);
 void rand_seed( unsigned int seed1, unsigned int seed2, int me);
 ulong rand(int me);
 void poll_errors();
@@ -1580,13 +1581,7 @@ void rowhammer(int row_max, int *row_cnt, int toggle_max, int me)
                 break;
 
             // open and close row-pair (addr1 & addr2) repeatedly
-            for (int toggle = 0; toggle < toggle_max; toggle++) {
-                asm volatile("movl (%0), %%eax" : : "r" (addr1) : "eax");
-                asm volatile("movl (%0), %%ebx" : : "r" (addr2) : "ebx");
-                asm volatile("clflush (%0)" : : "r" (addr1) : "memory");
-                asm volatile("clflush (%0)" : : "r" (addr2) : "memory");
-                //asm volatile("mfence");
-            }
+            do_rowhammer(addr1, addr2, toggle_max);
 
             (*row_cnt)++;
 
